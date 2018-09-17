@@ -1449,8 +1449,7 @@ public:
    * one used by %Wt and load another JQuery version instead, but this
    * needs to be done using requireJQuery().
    */
-  bool require(const std::string& url,
-	       const std::string& symbol = std::string());
+  bool require(const std::string& url, const std::string& type = std::string(), const std::string& symbol = std::string());
 
   /*! \brief Loads a custom JQuery library.
    *
@@ -2199,9 +2198,10 @@ private:
   Signal< ::int64_t > requestTooLarge_;
 
   struct ScriptLibrary {
-    ScriptLibrary(const std::string& uri, const std::string& symbol);
+    ScriptLibrary(const std::string& uri, std::string const & type, const std::string& symbol);
 
     std::string uri, symbol, beforeLoadJS;
+    std::string type;
     bool operator< (const ScriptLibrary& other) const;
     bool operator== (const ScriptLibrary& other) const;
   };
