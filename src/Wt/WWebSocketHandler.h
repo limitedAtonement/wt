@@ -1,24 +1,40 @@
 #ifndef WWEBSOCKETHANDLER_
 #define WWEBSOCKETHANDLER_
 
-#include <web/WebSocketMessage.h>
+#include <Wt/WObject.h>
+
+class WebSocketMessage;
 
 namespace Wt {
 
-class WWebSocketHandler;
-
-class WT_API WWebSocketHandlerCreator : public WObject
+class WT_API WWebSocketConnectionInformation final : public WObject
 {
-    virtual std::unique_ptr<WWebSocketHandler> createWebSocketHandler(void) = 0;
+    public:
+    std::string const & getInternalPath(void) const;
+private:
+    std::string internalPath;
 };
 
-class WT_API WWebSocketHandler : public WObject
-{
-    Signal<std::unique_ptr<WebSocketMessage>> & handleMessage();
-    virtual void sendMessage() {}
+class WWebSocket;
 
+class WT_API WWebSocketConnectionHandler : public WObject
+{
+    public:
+    virtual ~WWebSocketConnectionHandler(){};
+    virtual bool acceptConnection(WWebSocketConnectionInformation const &) {return true;};
+    virtual void handleConnection(WWebSocket &) {};
+};
+
+class WT_API WWebSocket final : public WObject
+{
+    public:
+    WWebSocket(WWebSocketConnectionInformation &&);
+    Signal<std::unique_ptr<WebSocketMessage>, WWebSocket &> & handleMessage();
+    void sendMessage(WebSocketMessage &) {}
+    WWebSocketConnectionInformation const & getConnectionInformation(void) const {return _connectionInformation;}
     private:
     Signal<std::unique_ptr<WebSocketMessage>> _handleMessage;
+    WWebSocketConnectionInformation _connectionInformation;
 };
 
 }

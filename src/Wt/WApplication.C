@@ -1484,12 +1484,12 @@ void WApplication::addAutoJavaScript(const std::string& javascript)
   autoJavaScriptChanged_ = true;
 }
 
-void WApplication::addWebSocketHandler(std::unique_ptr<WWebSocketHandlerCreator> creator, std::string const & path)
+void WApplication::addWebSocketHandler(std::string const & path, std::unique_ptr<WWebSocketConnectionHandler> connectionHandler)
 {
-    auto spot {std::find_if(webSocketHandlers.begin(), webSocketHandlers.end(), [&path] (std::pair<std::string, std::unique_ptr<WWebSocketHandlerCreator>> const & a){return a.first == path;})};
-    if (spot != webSocketHandlers.end())
+    auto spot {std::find_if(webSocketConnectionHandlers.begin(), webSocketConnectionHandlers.end(), [&path] (std::pair<std::string, std::unique_ptr<WWebSocketConnectionHandler>> const & a){return a.first == path;})};
+    if (spot != webSocketConnectionHandlers.end())
         throw WException("There is already a handler for path, \"" + path + "\"");
-    webSocketHandlers.emplace_back(std::make_pair(path, std::move(creator)));
+    webSocketConnectionHandlers.emplace_back(std::make_pair(path, std::move(connectionHandler)));
 }
 
 void WApplication::declareJavaScriptFunction(const std::string& name,

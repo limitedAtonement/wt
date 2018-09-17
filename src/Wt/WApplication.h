@@ -286,7 +286,7 @@ public:
    */
   WContainerWidget *root() const { return widgetRoot_; }
 
-  void addWebSocketHandler(std::unique_ptr<WWebSocketHandlerCreator>, std::string const & path);
+  void addWebSocketHandler(std::string const & path, std::unique_ptr<WWebSocketConnectionHandler>);
 
   /*! \brief Finds a widget by name.
    *
@@ -2276,7 +2276,7 @@ private:
   int selectionStart_, selectionEnd_;
   LayoutDirection layoutDirection_;
 
-  std::vector<std::pair<std::string, std::unique_ptr<WWebSocketHandlerCreator>>> webSocketHandlers;
+  std::vector<std::pair<std::string, std::unique_ptr<WWebSocketConnectionHandler>>> webSocketConnectionHandlers;
   std::vector<ScriptLibrary> scriptLibraries_;
   int scriptLibrariesAdded_;
 
