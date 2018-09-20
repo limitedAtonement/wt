@@ -1909,70 +1909,69 @@ void WebSession::handleWebSocketMessage(std::weak_ptr<WebSession> session,
     case WebReadEvent::Message:
       {
 	WebSocketMessage *message = new WebSocketMessage(lock.get());
-
 	bool closing = message->contentLength() == 0;
 
 	if (!closing) {
-	  CgiParser cgi(lock->controller_->configuration().maxRequestSize(),
-			lock->controller_->configuration().maxFormDataSize());
-	  try {
-	    cgi.parse(*message, CgiParser::ReadDefault);
-	  } catch (std::exception& e) {
-	    LOG_ERROR("could not parse ws message: " << e.what());
-	    delete message;
-	    closing = true;
-	  }
+            if (!lock->app_->handle(*message)) {
+                CgiParser cgi(lock->controller_->configuration().maxRequestSize(),
+                        lock->controller_->configuration().maxFormDataSize());
+                try {
+                    cgi.parse(*message, CgiParser::ReadDefault);
+                } catch (std::exception& e) {
+                    LOG_ERROR("could not parse ws message: " << e.what());
+                    delete message;
+                    closing = true;
+                }
 
-	  const std::string *connectedE = message->getParameter("connected");
-	  if (connectedE) {
-	    if (lock->asyncResponse_) {
-	      lock->asyncResponse_->flush();
-	      lock->asyncResponse_ = nullptr;
-	    }
+                const std::string *connectedE = message->getParameter("connected");
+                if (connectedE) {
+                    if (lock->asyncResponse_) {
+                        lock->asyncResponse_->flush();
+                        lock->asyncResponse_ = nullptr;
+                    }
 
-	    lock->renderer_.ackUpdate(Utils::stoi(*connectedE));
-	    lock->webSocketConnected_ = true;
-	  }
+                    lock->renderer_.ackUpdate(Utils::stoi(*connectedE));
+                    lock->webSocketConnected_ = true;
+                }
 
-	  const std::string *wsRqIdE = message->getParameter("wsRqId");
-	  if (wsRqIdE) {
-	    int wsRqId = Utils::stoi(*wsRqIdE);
-	    lock->renderer_.addWsRequestId(wsRqId);
-	  }
+                const std::string *wsRqIdE = message->getParameter("wsRqId");
+                if (wsRqIdE) {
+                    int wsRqId = Utils::stoi(*wsRqIdE);
+                    lock->renderer_.addWsRequestId(wsRqId);
+                }
 
-	  const std::string *signalE = message->getParameter("signal");
+                const std::string *signalE = message->getParameter("signal");
 
-	  if (signalE && *signalE == "ping") {
-	    LOG_DEBUG("ws: handle ping");
-	    if (lock->canWriteWebSocket_) {
-	      lock->canWriteWebSocket_ = false;
-	      lock->webSocket_->out() << "{}";
-	      lock->webSocket_->flush
-		(WebRequest::ResponseState::ResponseFlush,
-		 std::bind(&WebSession::webSocketReady, session,
-			   std::placeholders::_1));
-	    }
+                if (signalE && *signalE == "ping") {
+                    LOG_DEBUG("ws: handle ping");
+                    if (lock->canWriteWebSocket_) {
+                        lock->canWriteWebSocket_ = false;
+                        lock->webSocket_->out() << "{}";
+                        lock->webSocket_->flush
+                            (WebRequest::ResponseState::ResponseFlush,
+                             std::bind(&WebSession::webSocketReady, session,
+                                 std::placeholders::_1));
+                    }
 
-	    lock->webSocket_->readWebSocketMessage
-	      (std::bind(&WebSession::handleWebSocketMessage, session,
-			 std::placeholders::_1));
-	    
-	    delete message;
+                    lock->webSocket_->readWebSocketMessage
+                        (std::bind(&WebSession::handleWebSocketMessage, session,
+                                   std::placeholders::_1));
 
-	    return;
-	  }
+                    delete message;
 
-	  const std::string *pageIdE = message->getParameter("pageId");
-	  if (pageIdE && *pageIdE != std::to_string(lock->renderer_.pageId()))
-	    closing = true;
-	}
+                    return;
+                }
 
-	if (!closing) {
-	  handler.setRequest(message, (WebResponse *)(message));
-	  lock->handleRequest(handler);
-	} else
-	  delete message;
-
+                const std::string *pageIdE = message->getParameter("pageId");
+                if (pageIdE && *pageIdE != std::to_string(lock->renderer_.pageId()))
+                    closing = true;
+                if (!closing) {
+                    handler.setRequest(message, (WebResponse *)(message));
+                    lock->handleRequest(handler);
+                } else
+                    delete message;
+            }
+        }
 	if (lock->dead()) {
 	  closing = true;
 	  lock->controller_->removeSession(lock->sessionId());

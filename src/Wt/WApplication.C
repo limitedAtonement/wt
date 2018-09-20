@@ -18,6 +18,7 @@
 #include "Wt/WMemoryResource.h"
 #include "Wt/WServer.h"
 #include "Wt/WTimer.h"
+#include "web/WebSocketMessage.h"
 
 #include "WebSession.h"
 #include "DomElement.h"
@@ -1484,12 +1485,13 @@ void WApplication::addAutoJavaScript(const std::string& javascript)
   autoJavaScriptChanged_ = true;
 }
 
-void WApplication::addWebSocketHandler(std::string const & path, std::unique_ptr<WWebSocketConnectionHandler> connectionHandler)
+void WApplication::addWebSocket(std::unique_ptr<WWebSocket> socket)
 {
-    auto spot {std::find_if(webSocketConnectionHandlers.begin(), webSocketConnectionHandlers.end(), [&path] (std::pair<std::string, std::unique_ptr<WWebSocketConnectionHandler>> const & a){return a.first == path;})};
-    if (spot != webSocketConnectionHandlers.end())
-        throw WException("There is already a handler for path, \"" + path + "\"");
-    webSocketConnectionHandlers.emplace_back(std::make_pair(path, std::move(connectionHandler)));
+    auto spot {std::find_if(webSockets.begin(), webSockets.end(), [&socket] (std::unique_ptr<WWebSocket> const & a){
+            return a->getConnectionInformation().internalPath == socket->getConnectionInformation().internalPath;})};
+    if (spot != webSockets.end())
+        throw WException("There is already a handler for path, \"" + socket->getConnectionInformation().internalPath + "\"");
+    webSockets.emplace_back(std::move(socket));
 }
 
 void WApplication::declareJavaScriptFunction(const std::string& name,
@@ -1696,5 +1698,22 @@ void WApplication::resumeRendering()
   session_->resumeRendering();
 }
 #endif // WT_TARGET_JAVA
+
+bool WApplication::handle(WebSocketMessage & message)
+{
+    int spot{-1};
+    for (int i{0}; i < webSockets.size(); ++i)
+    {
+        if (message.queryString().rfind(webSockets[i]->getConnectionInformation().internalPath, 0) == 0)
+        {
+            spot = i;
+            break;
+        }
+    }
+    if (spot == -1)
+        return false;
+    webSockets[spot]->messageFromClient(message);
+    return true;
+}
 
 }

@@ -256,6 +256,7 @@ Wt/WVideo.C
 Wt/WVmlImage.C
 Wt/WViewWidget.C
 Wt/WVirtualImage.C
+Wt/WWebSocket.C
 Wt/WWebWidget.C
 Wt/WWidget.C
 Wt/WWidgetItem.C

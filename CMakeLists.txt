@@ -152,6 +152,7 @@ IF(NOT SHARED_LIBS)
 ENDIF(NOT SHARED_LIBS)
 
 IF(NOT MULTI_THREADED)
+  MESSAGE("MULTI_THREADED is not.")
   OPTION(MULTI_THREADED "Build multi-threaded httpd deamon (if possible)" ON)
 ENDIF(NOT MULTI_THREADED)
 
@@ -356,6 +357,7 @@ ENDIF(ENABLE_QT4)
 
 set(WT_THREAD_LIB "")
 IF(MULTI_THREADED)
+  message("Multi_threaded is")
   find_package(Threads)
   set(WT_THREAD_LIB Threads::Threads)
 ENDIF(MULTI_THREADED)

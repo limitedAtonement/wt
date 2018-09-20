@@ -27,7 +27,7 @@ namespace boost {
 #include <Wt/WMessageResourceBundle.h>
 #include <Wt/WSignal.h>
 #include <Wt/WString.h>
-#include <Wt/WWebSocketHandler.h>
+#include <Wt/WWebSocket.h>
 
 namespace Wt {
 
@@ -286,7 +286,9 @@ public:
    */
   WContainerWidget *root() const { return widgetRoot_; }
 
-  void addWebSocketHandler(std::string const & path, std::unique_ptr<WWebSocketConnectionHandler>);
+  void addWebSocket(std::unique_ptr<WWebSocket>);
+
+  bool handle(Wt::WebSocketMessage &);
 
   /*! \brief Finds a widget by name.
    *
@@ -2276,7 +2278,7 @@ private:
   int selectionStart_, selectionEnd_;
   LayoutDirection layoutDirection_;
 
-  std::vector<std::pair<std::string, std::unique_ptr<WWebSocketConnectionHandler>>> webSocketConnectionHandlers;
+  std::vector<std::unique_ptr<WWebSocket>> webSockets;
   std::vector<ScriptLibrary> scriptLibraries_;
   int scriptLibrariesAdded_;
 
